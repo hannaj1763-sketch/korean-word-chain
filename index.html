@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>말랑말랑 끝말잇기 - 그림 & 음성 AI 대전</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans KR & Jua -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'sans-serif'],
+                        display: ['"Jua"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-ring': 'pulseRing 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite',
+                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'fade-in': 'fadeIn 0.45s ease-out forwards',
+                        'float': 'float 3s ease-in-out infinite',
+                        'soundwave': 'soundWave 0.6s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        pulseRing: {
+                            '0%': { transform: 'scale(0.85)', opacity: '0.8' },
+                            '100%': { transform: 'scale(1.75)', opacity: '0' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-2px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(4px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-6px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(6px, 0, 0)' }
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.88)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.96)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-4px)' }
+                        },
+                        soundWave: {
+                            '0%': { transform: 'scaleY(0.3)' },
+                            '100%': { transform: 'scaleY(1)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6eeff 50%, #f3e8ff 100%);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.6);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col items-center justify-between p-3 sm:p-5 select-none">
+
+    <!-- 상단 헤더 및 상태바 -->
+    <header class="w-full max-w-2xl glass-card rounded-3xl shadow-sm px-4 py-3 sm:px-6 sm:py-3.5 flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2.5">
+            <div id="ai-avatar-box" class="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-500 text-white flex items-center justify-center shadow-md transition-all">
+                <i class="fa-solid fa-robot text-lg"></i>
+                <span id="ai-avatar-speaking-dot" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white animate-ping"></span>
+            </div>
+            <div>
+                <h1 class="font-display text-xl sm:text-2xl text-slate-800 tracking-wide">말랑 그림 끝말잇기</h1>
+                <p class="text-[11px] sm:text-xs text-slate-500 font-medium">AI 그림 · 음성 · 타이핑 대결</p>
+            </div>
+        </div>
+
+        <!-- 점수 / 콤보 / 컨트롤 버튼 -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- 콤보 & 점수 -->
+            <div class="flex items-center gap-2 bg-indigo-50/90 border border-indigo-100 px-2.5 sm:px-3 py-1.5 rounded-2xl">
+                <div class="text-center pr-2 border-r border-indigo-200/70">
+                    <span class="block text-[10px] text-indigo-500 font-bold">콤보</span>
+                    <span id="combo-display" class="font-display text-sm sm:text-base text-indigo-700">0</span>
+                </div>
+                <div class="text-center pl-1">
+                    <span class="block text-[10px] text-purple-500 font-bold">점수</span>
+                    <span id="score-display" class="font-display text-sm sm:text-base text-purple-700">0</span>
+                </div>
+            </div>
+
+            <!-- 핸즈프리 연속 대화 토글 -->
+            <button id="handsfree-toggle-btn" type="button" onclick="toggleHandsFreeMode()" title="AI가 말한 뒤 자동으로 마이크 켜기" class="h-10 px-2.5 sm:px-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 flex items-center gap-1.5 shadow-sm transition active:scale-95 text-xs font-bold">
+                <i class="fa-solid fa-headset"></i>
+                <span class="hidden sm:inline">연속대화</span>
+            </button>
+
+            <!-- TTS 음성 출력 토글 -->
+            <button id="tts-toggle-btn" type="button" onclick="toggleTTS()" title="AI 음성 말하기 켜기/끄기" class="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm transition active:scale-95">
+                <i id="tts-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+
+            <!-- 타이머 토글 -->
+            <button id="timer-toggle-btn" type="button" onclick="toggleTimerMode()" title="제한시간 모드 켜기/끄기" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-amber-500 flex items-center justify-center shadow-sm transition active:scale-95">
+                <i id="timer-icon" class="fa-solid fa-stopwatch"></i>
+            </button>
+
+            <!-- 다시 시작 버튼 -->
+            <button type="button" onclick="resetGame()" title="새 게임 시작" class="w-10 h-10 rounded-2xl bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 flex items-center justify-center shadow-sm transition active:scale-95">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 메인 게임 컨테이너 -->
+    <main class="w-full max-w-2xl flex-1 flex flex-col gap-3">
+
+        <!-- 현재 제시어 스테이지 카드 (그림 일러스트 + 제시어 + 두음법칙) -->
+        <section id="main-word-card" class="glass-card rounded-3xl shadow-md p-4 sm:p-5 text-center relative overflow-hidden transition-all">
+            <!-- 타이머 진행 바 (타이머 모드 활성 시 표시) -->
+            <div id="timer-bar-container" class="hidden absolute top-0 left-0 w-full h-1.5 bg-slate-100">
+                <div id="timer-bar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-200" style="width: 100%;"></div>
+            </div>
+
+            <!-- 상단 상태 배지 및 힌트 버튼 -->
+            <div class="flex items-center justify-between mb-3 gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="turn-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
+                        <i class="fa-solid fa-robot"></i> AI의 제시어
+                    </span>
+                    <!-- AI 말하는 중 음파 애니메이션 배지 -->
+                    <span id="ai-speaking-badge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 animate-pop">
+                        <span class="inline-flex items-end gap-0.5 h-3">
+                            <span class="w-0.5 h-full bg-emerald-600 rounded-full animate-soundwave" style="animation-delay: 0s;"></span>
+                            <span class="w-0.5 h-full bg-emerald-600 rounded-full animate-soundwave" style="animation-delay: 0.2s;"></span>
+                            <span class="w-0.5 h-full bg-emerald-600 rounded-full animate-soundwave" style="animation-delay: 0.4s;"></span>
+                        </span>
+                        <span>AI 말하는 중...</span>
+                    </span>
+                </div>
+
+                <span id="timer-text" class="text-xs font-bold text-slate-500 hidden">
+                    남은 시간: <span id="seconds-left" class="text-rose-600 text-sm">15</span>초
+                </span>
+
+                <button id="hint-btn" type="button" onclick="useHint()" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-800 transition active:scale-95">
+                    <i class="fa-solid fa-lightbulb text-amber-500"></i> 힌트 (<span id="hint-count">3</span>)
+                </button>
+            </div>
+
+            <!-- 중앙 비주얼 영역: 왼쪽/상단 일러스트 카드 + 오른쪽/하단 제시어 & 뜻풀이 -->
+            <div class="my-2 sm:my-3 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                <!-- 단어 일러스트 이미지 액자 -->
+                <div class="relative w-32 h-32 sm:w-40 sm:h-40 rounded-3xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-100/90 shadow-inner overflow-hidden flex-shrink-0 flex items-center justify-center group">
+                    <!-- 로딩 스켈레톤 오버레이 -->
+                    <div id="word-image-skeleton" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50/95 to-purple-50/95 backdrop-blur-xs transition-opacity duration-300">
+                        <div class="w-9 h-9 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-1.5 animate-bounce">
+                            <i class="fa-solid fa-paintbrush text-base"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-indigo-600 animate-pulse">그림 그리는 중...</span>
+                    </div>
+
+                    <!-- 실제 생성/폴백 이미지 -->
+                    <img id="current-word-image" src="" alt="단어 일러스트" class="w-full h-full object-cover opacity-0 transition-opacity duration-500" />
+                    
+                    <!-- AI 아트 배지 -->
+                    <span id="image-source-tag" class="absolute bottom-1.5 right-1.5 z-10 px-2 py-0.5 rounded-full text-[9px] font-bold bg-black/45 text-white backdrop-blur-xs">
+                        AI 그림
+                    </span>
+                </div>
+
+                <!-- 제시어 텍스트 + 다시 듣기 + 뜻풀이 + 다음 글자 안내 -->
+                <div class="flex flex-col items-center sm:items-start text-center sm:text-left flex-1">
+                    <div class="flex items-center justify-center sm:justify-start gap-2.5">
+                        <div id="current-word-display" class="font-display text-4xl sm:text-5xl md:text-6xl text-slate-800 tracking-tight animate-pop drop-shadow-sm">
+                            사과
+                        </div>
+                        <button id="replay-tts-btn" type="button" onclick="replayCurrentAiWord()" title="단어 음성 다시 듣기" class="w-10 h-10 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200/80 flex items-center justify-center shadow-xs transition transform active:scale-90 flex-shrink-0">
+                            <i class="fa-solid fa-volume-high text-base"></i>
+                        </button>
+                    </div>
+
+                    <p id="word-meaning-display" class="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium line-clamp-2 max-w-md">
+                        사과나무의 열매. 둥글고 붉거나 푸른빛이 돕니다.
+                    </p>
+
+                    <!-- 다음 이어야 할 첫 글자 안내 박스 -->
+                    <div id="next-char-guide" class="mt-3 bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 border border-indigo-200/80 rounded-2xl py-2 px-3.5 inline-flex flex-wrap items-center justify-center sm:justify-start gap-1.5 shadow-inner">
+                        <span class="text-xs sm:text-sm font-bold text-slate-700">다음 글자:</span>
+                        <span id="target-chars-badges" class="inline-flex items-center gap-1.5">
+                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-600 text-white font-display text-base shadow-sm">과</span>
+                        </span>
+                        <span class="text-xs sm:text-sm font-medium text-slate-600">(으)로 시작!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실시간 피드백 / 알림 메시지 배너 -->
+            <div id="feedback-banner" class="mt-2 pt-2 border-t border-slate-100 min-h-[28px] flex items-center justify-center">
+                <p id="feedback-text" class="text-xs sm:text-sm font-bold text-indigo-600 transition-all">
+                    마이크를 눌러 말하거나 아래에 단어를 입력하세요!
+                </p>
+            </div>
+        </section>
+
+        <!-- 사용자 입력 컨트롤 영역 (제시어 카드 바로 아래 배치) -->
+        <section class="glass-card rounded-3xl shadow-lg p-3 sm:p-4">
+            <!-- 음성 인식 상태 표시 오버레이 바 (녹음 중일 때만 보임) -->
+            <div id="voice-status-bar" class="hidden mb-2.5 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-2 flex items-center justify-between animate-pop">
+                <div class="flex items-center gap-2.5">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                    </span>
+                    <span id="voice-interim-text" class="text-xs sm:text-sm font-bold text-rose-700">듣고 있어요... 단어를 말씀하세요!</span>
+                </div>
+                <button type="button" onclick="stopVoiceRecognition()" class="text-xs font-bold text-rose-500 hover:text-rose-700 px-2.5 py-1 rounded-lg bg-white border border-rose-200">
+                    취소
+                </button>
+            </div>
+
+            <!-- 입력 폼 & 마이크 버튼 -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- 마이크 버튼 -->
+                <div class="relative flex-shrink-0">
+                    <div id="mic-pulse-ring" class="hidden absolute inset-0 rounded-2xl bg-rose-500 animate-pulse-ring pointer-events-none"></div>
+                    <button id="mic-btn" type="button" onclick="toggleVoiceRecognition()" title="음성으로 단어 말하기" class="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white flex items-center justify-center shadow-md transition transform active:scale-95 cursor-pointer">
+                        <i id="mic-icon" class="fa-solid fa-microphone text-xl sm:text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- 텍스트 입력창 -->
+                <form id="word-form" onsubmit="handleFormSubmit(event)" class="flex-1 flex items-center gap-2">
+                    <input 
+                        type="text" 
+                        id="word-input" 
+                        autocomplete="off"
+                        placeholder="단어를 입력하거나 마이크를 누르세요" 
+                        class="w-full h-12 sm:h-14 px-4 rounded-2xl bg-white border-2 border-slate-200 focus:border-indigo-500 focus:outline-none text-base sm:text-lg font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal transition"
+                    >
+                    <button 
+                        type="submit" 
+                        id="submit-btn"
+                        class="h-12 sm:h-14 px-5 sm:px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm sm:text-base shadow-md transition transform active:scale-95 flex items-center gap-1.5 flex-shrink-0"
+                    >
+                        <span>전송</span>
+                        <i class="fa-solid fa-paper-plane text-xs sm:text-sm"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 맨 아래 영역: 이어진 그림 & 단어 타임라인 패널 -->
+        <section class="glass-card rounded-3xl shadow-sm p-3.5 sm:p-4 flex flex-col">
+            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-200/70">
+                <span class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                    <i class="fa-solid fa-images text-indigo-500"></i> 이어진 그림 & 단어 기록
+                </span>
+                <span class="text-xs font-bold text-slate-400">총 <span id="word-count" class="text-indigo-600">1</span>단어</span>
+            </div>
+            
+            <!-- 가로 스크롤 그림 카드 타임라인 영역 -->
+            <div id="history-container" class="flex items-stretch gap-2.5 overflow-x-auto custom-scrollbar pb-1.5 pt-0.5">
+                <!-- 단어 그림 카드는 JS에서 렌더링 -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 게임 종료 / 결과 모달 -->
+    <div id="gameover-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl animate-pop">
+            <div id="modal-icon-bg" class="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i id="modal-icon" class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 id="modal-title" class="font-display text-2xl sm:text-3xl text-slate-800 mb-1">게임 종료!</h2>
+            <p id="modal-subtitle" class="text-sm text-slate-500 mb-5">제한 시간이 초과되었습니다.</p>
+            
+            <div class="bg-slate-50 rounded-2xl p-4 mb-6 grid grid-cols-3 gap-2 border border-slate-100">
+                <div>
+                    <span class="block text-xs text-slate-400 font-bold">최종 점수</span>
+                    <span id="final-score" class="font-display text-xl text-indigo-600">0</span>
+                </div>
+                <div class="border-x border-slate-200">
+                    <span class="block text-xs text-slate-400 font-bold">최대 콤보</span>
+                    <span id="final-combo" class="font-display text-xl text-purple-600">0</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-slate-400 font-bold">이어진 단어</span>
+                    <span id="final-words" class="font-display text-xl text-emerald-600">0</span>
+                </div>
+            </div>
+
+            <button type="button" onclick="resetGame()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-base shadow-lg transition transform active:scale-95">
+                다시 도전하기
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript 게임 로직, 두음법칙 엔진, Web Speech API & Gemini 텍스트/이미지 API 연동 -->
+    <script>
+        /**
+         * 1. 한국어 두음법칙 변환 모듈
+         */
+// ... existing code ... -->
+        /**
+         * 6. Web Speech API - 음성 합성 (TTS) & 음성 인식 (STT) 안정화 버전
+         */
+        let preferredKoreanVoice = null;
+        let ttsSafetyTimer = null;
+        let isAudioUnlocked = false;
+        let pendingInitialSpeechWord = null;
+
+        function loadKoreanVoice() {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || !voices.length) return;
+            preferredKoreanVoice =
+                voices.find(v => (v.lang === 'ko-KR' || v.lang === 'ko_KR') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Yuna') || v.name.includes('Heami'))) ||
+                voices.find(v => v.lang.toLowerCase().includes('ko')) ||
+                null;
+        }
+
+        if ('speechSynthesis' in window) {
+            loadKoreanVoice();
+            window.speechSynthesis.onvoiceschanged = loadKoreanVoice;
+        }
+
+        // 사용자 첫 클릭/터치/키 입력 시 브라우저 음성 합성 엔진 잠금 즉시 해제
+        function unlockBrowserAudio() {
+            if (isAudioUnlocked || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.resume();
+                const warmup = new SpeechSynthesisUtterance('');
+                warmup.lang = 'ko-KR';
+                warmup.volume = 0;
+                window.speechSynthesis.speak(warmup);
+                isAudioUnlocked = true;
+
+                // 첫 제시어 대기 중이었다면 잠금 해제 직후 즉시 읽어주기
+                if (pendingInitialSpeechWord && gameState.ttsEnabled) {
+                    const wordToSpeak = pendingInitialSpeechWord;
+                    pendingInitialSpeechWord = null;
+                    setTimeout(() => speakKorean(wordToSpeak, { autoStartMicAfter: true }), 80);
+                }
+            } catch (e) {}
+        }
+
+        document.addEventListener('pointerdown', unlockBrowserAudio, { passive: true });
+        document.addEventListener('keydown', unlockBrowserAudio, { passive: true });
+
+        function setAiSpeakingUI(speaking) {
+            const speakingBadge = document.getElementById('ai-speaking-badge');
+            const avatarDot = document.getElementById('ai-avatar-speaking-dot');
+            const replayBtn = document.getElementById('replay-tts-btn');
+
+            if (speaking) {
+                speakingBadge.classList.remove('hidden');
+                speakingBadge.classList.add('inline-flex');
+                avatarDot.classList.remove('hidden');
+                replayBtn.classList.add('ring-4', 'ring-indigo-200', 'bg-indigo-600', 'text-white');
+                replayBtn.classList.remove('bg-indigo-50', 'text-indigo-600');
+            } else {
+                speakingBadge.classList.add('hidden');
+                speakingBadge.classList.remove('inline-flex');
+                avatarDot.classList.add('hidden');
+                replayBtn.classList.remove('ring-4', 'ring-indigo-200', 'bg-indigo-600', 'text-white');
+                replayBtn.classList.add('bg-indigo-50', 'text-indigo-600');
+            }
+        }
+
+        function stopAllSpeechSynthesis() {
+            if (ttsSafetyTimer) {
+                clearTimeout(ttsSafetyTimer);
+                ttsSafetyTimer = null;
+            }
+            if ('speechSynthesis' in window) {
+                try {
+                    window.speechSynthesis.cancel();
+                } catch (e) {}
+            }
+            setAiSpeakingUI(false);
+        }
+
+        // 통합 한국어 TTS 발화 함수 (resume 강제 호출 + ko-KR 폴백 보장)
+        function speakKorean(word, options = {}) {
+            const { autoStartMicAfter = false, customText = null } = options;
+            stopAllSpeechSynthesis();
+
+            if (!gameState.ttsEnabled || !('speechSynthesis' in window)) {
+                if (autoStartMicAfter && gameState.handsFreeMode && !gameState.isGameOver) {
+                    setTimeout(() => startVoiceRecognition(true), 300);
+                }
+                return;
+            }
+
+            try {
+                // 크롬/사파리/엣지 등에서 일시정지된 음성 엔진 강제 재개
+                window.speechSynthesis.resume();
+                if (!preferredKoreanVoice) loadKoreanVoice();
+
+                const lastChar = word[word.length - 1];
+                const variants = getDueumVariants(lastChar);
+                const nextGuideText = variants.length > 1
+                    ? `${variants[0]} 또는 ${variants[1]}`
+                    : `${variants[0]}`;
+
+                const speechText = customText || `${word}! 다음은 '${nextGuideText}'로 시작하는 단어를 말해주세요.`;
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.lang = 'ko-KR';
+                if (preferredKoreanVoice) {
+                    utterance.voice = preferredKoreanVoice;
+                }
+                utterance.rate = 1.05;
+                utterance.pitch = 1.04;
+                utterance.volume = 1.0;
+
+                let finished = false;
+                const onFinishSpeech = () => {
+                    if (finished) return;
+                    finished = true;
+                    if (ttsSafetyTimer) {
+                        clearTimeout(ttsSafetyTimer);
+                        ttsSafetyTimer = null;
+                    }
+                    setAiSpeakingUI(false);
+                    if (autoStartMicAfter && gameState.handsFreeMode && !gameState.isGameOver && !gameState.isAiThinking) {
+                        setTimeout(() => startVoiceRecognition(true), 250);
+                    }
+                };
+
+                utterance.onstart = () => {
+                    isAudioUnlocked = true;
+                    pendingInitialSpeechWord = null;
+                    setAiSpeakingUI(true);
+                };
+                utterance.onend = onFinishSpeech;
+                utterance.onerror = () => {
+                    // 첫 로드 시 자동재생 정책으로 차단된 경우 첫 사용자 클릭 시 자동 발화 예약
+                    if (!isAudioUnlocked && !customText) {
+                        pendingInitialSpeechWord = word;
+                    }
+                    onFinishSpeech();
+                };
+
+                // 4.5초 안전 타임아웃 (브라우저 onend 누락 방지)
+                ttsSafetyTimer = setTimeout(onFinishSpeech, 4500);
+
+                // cancel() 직후 speak()가 무시되는 브라우저 버그 방지용 미세 지연
+                setTimeout(() => {
+                    try {
+                        window.speechSynthesis.resume();
+                        window.speechSynthesis.speak(utterance);
+                    } catch (e) {
+                        onFinishSpeech();
+                    }
+                }, 30);
+            } catch (e) {
+                setAiSpeakingUI(false);
+            }
+        }
+
+        function speakAiTurn(word, autoStartMicAfter = false) {
+            speakKorean(word, { autoStartMicAfter });
+        }
+
+        function replayCurrentAiWord() {
+            unlockBrowserAudio();
+            if (!gameState.ttsEnabled) {
+                gameState.ttsEnabled = true;
+                document.getElementById('tts-icon').className = "fa-solid fa-volume-high";
+                const btn = document.getElementById('tts-toggle-btn');
+                btn.className = "w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm transition active:scale-95";
+            }
+            speakKorean(gameState.currentWord, { autoStartMicAfter: false });
+        }
+
+        function toggleTTS() {
+            unlockBrowserAudio();
+            gameState.ttsEnabled = !gameState.ttsEnabled;
+            const icon = document.getElementById('tts-icon');
+            const btn = document.getElementById('tts-toggle-btn');
+            if (gameState.ttsEnabled) {
+                icon.className = "fa-solid fa-volume-high";
+                btn.className = "w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm transition active:scale-95";
+                showFeedback("음성이 켜졌습니다! 현재 단어를 읽어드릴게요.", "info");
+                speakKorean(gameState.currentWord, {
+                    autoStartMicAfter: false,
+                    customText: `음성이 켜졌습니다. 현재 단어는 ${gameState.currentWord}입니다.`
+                });
+            } else {
+                icon.className = "fa-solid fa-volume-xmark";
+                btn.className = "w-10 h-10 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm transition active:scale-95";
+                stopAllSpeechSynthesis();
+                showFeedback("AI 음성 말하기가 꺼졌습니다.", "info");
+            }
+        }
+
+        // 음성 인식 (STT) 안정화 관리
+// ... existing code ... -->
+        function toggleVoiceRecognition() {
+            unlockBrowserAudio();
+            if (gameState.isGameOver) return;
+
+            if (isRecording) {
+                stopVoiceRecognition();
+                showFeedback("음성 입력이 취소되었습니다.", "info");
+            } else {
+                startVoiceRecognition(false);
+            }
+        }
+// ... existing code ... -->
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            unlockBrowserAudio();
+            if (gameState.isGameOver || gameState.isAiThinking) return;
+            const inputEl = document.getElementById('word-input');
+            const rawWord = inputEl.value.trim().replace(/\s+/g, '');
+            if (!rawWord) return;
+            processUserWord(rawWord);
+        }
+// ... existing code ... -->
+            gameState.usedWords.add(aiChoice.word);
+
+            // AI 단어가 결정되자마자 이미지 생성/UI 갱신보다 먼저 즉시 음성 발화 실행
+            speakKorean(aiChoice.word, { autoStartMicAfter: true });
+
+            const aiThumbId = addHistoryItem("ai", aiChoice.word, aiChoice.desc);
+            updateCurrentWordUI(aiChoice.word, aiChoice.desc, "ai", aiThumbId);
+
+            const nextChar = aiChoice.word[aiChoice.word.length - 1];
+            const nextVariants = getDueumVariants(nextChar);
+            showFeedback(`AI: "${aiChoice.word}"! '${nextVariants.join(" 또는 ")}'(으)로 이어보세요.`, "info");
+
+            if (gameState.timerEnabled) startTurnTimer();
+            inputEl.focus();
+        }
+// ... existing code ... -->
+            updateStatsUI();
+
+            // 첫 제시어 역시 즉시 발화 시도 (차단 시 첫 클릭 즉시 자동 재생 예약)
+            pendingInitialSpeechWord = initial.word;
+            speakKorean(initial.word, { autoStartMicAfter: true });
+
+            const firstThumbId = addHistoryItem("ai", initial.word, initial.desc);
+            updateCurrentWordUI(initial.word, initial.desc, "ai", firstThumbId);
+
+            const nextChar = initial.word[initial.word.length - 1];
+            const variants = getDueumVariants(nextChar);
+            showFeedback(`새 게임 시작! AI 제시어 "${initial.word}" - '${variants.join(" 또는 ")}'(으)로 이어보세요.`, "info");
+
+            if (gameState.timerEnabled) startTurnTimer();
+        }
+
+        window.onload = () => {
+            resetGame();
+        };
+    </script>
+</body>
+</html>
