@@ -812,8 +812,8 @@
       const c = candidatesFor(word); if (!c.length) return null;
       const P = pool();
       const good = c.filter(w => P.some(x => x !== w && !usedWords.has(x) && allowedStarts(w).includes(x[0])));
-      const pool = good.length ? good : c;
-      return pool[Math.floor(Math.random() * pool.length)];
+      const pick = good.length ? good : c;
+      return pick[Math.floor(Math.random() * pick.length)];
     }
     function submitTypedWord() {
       const inp = $('wordInput'); const w = inp.value.trim().replace(/\s+/g, '');
